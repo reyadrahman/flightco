@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DAC — Dhaka Flight Terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f9fd; --panel:#ffffff; --panel-2:#eef4fc; --line:#d7e3f2;
+    --navy:#0b3d78; --blue:#1461c9; --blue-bright:#2f8fe0; --sky:#eaf3fd;
+    --green:#1f9d55; --red:#d64545; --grey:#6b7a8d; --text:#10233f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;}
+  body{padding:0 0 60px 0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  header{background:var(--navy);color:#fff;padding:20px 28px 16px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(11,61,120,.15);}
+  .brand{display:flex;align-items:baseline;gap:14px;}
+  .brand .code{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:32px;letter-spacing:2px;color:#fff;}
+  .brand .name{font-size:13.5px;color:#bcd4f2;line-height:1.4;}
+  .brand .name b{color:#fff;font-weight:500;}
+  .clockwrap{text-align:right;}
+  .clock{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:1px;}
+  .clock span{color:var(--blue-bright);}
+  .datestr{color:#a9c4e8;font-size:12px;margin-top:2px;}
+  .livebar{margin:16px 28px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--grey);}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.4px;}
+  .pill-live{background:#e5f7ec;color:var(--green);}
+  .pill-live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;}
+  .pill-model{background:#fff2e0;color:#a15c00;}
+  .pill-model .dot{width:7px;height:7px;border-radius:50%;background:#a15c00;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .refreshbtn{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:6px 12px;border-radius:4px;border:1px solid var(--blue);color:var(--blue);background:#fff;cursor:pointer;}
+  .refreshbtn:hover{background:var(--sky);}
+  .tabs{display:flex;gap:6px;padding:14px 28px 0;flex-wrap:wrap;}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:8px 14px;border:1px solid var(--line);border-radius:4px;color:var(--grey);cursor:pointer;background:#fff;user-select:none;}
+  .tab.active{color:#fff;background:var(--blue);border-color:var(--blue);font-weight:600;}
+  .tab:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+  .board-wrap{margin:16px 28px 0;border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden;box-shadow:0 1px 3px rgba(16,35,63,.05);}
+  .board-head{display:grid;grid-template-columns:110px 1.6fr 130px 1fr;gap:8px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--grey);letter-spacing:1px;border-bottom:1px solid var(--line);background:var(--panel-2);}
+  .board-body{max-height:520px;overflow-y:auto;}
+  .row{display:grid;grid-template-columns:110px 1.6fr 130px 1fr;gap:8px;padding:11px 16px;align-items:center;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .row:hover{background:var(--sky);}
+  .row:last-child{border-bottom:none;}
+  .flightno{font-family:'IBM Plex Mono',monospace;color:var(--blue);font-weight:600;}
+  .dest{display:flex;flex-direction:column;}
+  .dest b{font-weight:600;font-size:14px;}
+  .dest small{color:var(--grey);font-size:11.5px;}
+  .time{font-family:'IBM Plex Mono',monospace;color:var(--text);}
+  .airline{color:var(--grey);font-size:12.5px;}
+  .empty-note{padding:20px 16px;color:var(--grey);font-size:13px;}
+  .section-title{margin:34px 28px 12px;display:flex;align-items:baseline;gap:10px;}
+  .section-title h2{font-size:16px;margin:0;font-weight:600;color:var(--navy);}
+  .section-title span{color:var(--grey);font-size:12px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:0 28px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 16px 14px;box-shadow:0 1px 3px rgba(16,35,63,.05);}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .card-top .city{font-size:16px;font-weight:600;color:var(--text);}
+  .card-top .iata{font-family:'IBM Plex Mono',monospace;color:var(--blue);font-size:12px;}
+  .card-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px dashed var(--line);color:var(--grey);}
+  .card-row b{color:var(--text);font-weight:500;font-family:'IBM Plex Mono',monospace;}
+  footer{margin:40px 28px 0;padding-top:16px;border-top:1px solid var(--line);color:var(--grey);font-size:11.5px;line-height:1.65;}
+  footer b{color:var(--navy);}
+  @media (max-width:760px){.board-head{display:none;} .row{grid-template-columns:1fr;gap:4px;padding:12px 14px;} .row .airline{order:5;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="code">DAC</span>
+    <div class="name">Hazrat Shahjalal Int'l Airport<br><b>Dhaka Flight Terminal</b></div>
+  </div>
+  <div class="clockwrap">
+    <div class="clock mono" id="clock">--:--:-- <span>BST</span></div>
+    <div class="datestr" id="datestr">—</div>
+  </div>
+</header>
+
+<div class="livebar">
+  <span class="pill" id="livePill"><span class="dot"></span><span id="livePillText">Loading data…</span></span>
+  <span id="lastUpdated">Data generated: —</span>
+  <button class="refreshbtn" id="refreshBtn">Reload data files</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-filter="all">ALL ROUTES</div>
+  <div class="tab" data-filter="domestic">DOMESTIC</div>
+  <div class="tab" data-filter="intl">INTERNATIONAL</div>
+</div>
+
+<div class="board-wrap">
+  <div class="board-head"><div>FLT</div><div>DESTINATION</div><div>OBSERVED (BST)</div><div>AIRLINE</div></div>
+  <div class="board-body" id="boardBody"></div>
+</div>
+
+<div class="section-title"><h2>Domestic fares</h2><span>Dhaka (DAC) — 7 destinations</span></div>
+<div class="cards" id="domesticCards"></div>
+
+<div class="section-title"><h2>International fares</h2><span>Dhaka (DAC) — selected routes</span></div>
+<div class="cards" id="intlCards"></div>
+
+<footer>
+  <b>Flight activity</b> is pulled by a GitHub Actions job every 12 hours from the <b>OpenSky Network</b> (real ADS-B departures
+  seen at VGHS in the last 13 hours) and committed to <code>data/flights.json</code> in this repo. <b>Fares</b> are pulled the same
+  way from the <b>Amadeus Self-Service Flight Offers Search API</b> into <code>data/fares.json</code> — real quoted prices for a
+  departure ~2 weeks out, median across the offers returned, not a live booking price. Because this page reads those files
+  same-origin, there's no browser CORS/sandbox issue like there is inside a Claude.ai artifact.
+</footer>
+
+<script>
+function pad(n){return n.toString().padStart(2,'0');}
+function updateClock(){
+  const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Dhaka'}));
+  document.getElementById('clock').innerHTML = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} <span>BST</span>`;
+  document.getElementById('datestr').textContent = now.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+let flightsData = null, faresData = null, currentFilter = 'all';
+
+function fmtBDT(n){ return n==null ? '—' : ('৳' + Math.round(n).toLocaleString('en-IN')); }
+
+async function loadData(){
+  const pill = document.getElementById('livePill');
+  const pillText = document.getElementById('livePillText');
+  try{
+    const [fRes, pRes] = await Promise.all([
+      fetch('data/flights.json', {cache:'no-store'}),
+      fetch('data/fares.json', {cache:'no-store'})
+    ]);
+    flightsData = fRes.ok ? await fRes.json() : null;
+    faresData = pRes.ok ? await pRes.json() : null;
+    if(flightsData){
+      pill.className = 'pill pill-live';
+      pillText.textContent = `Live — ${flightsData.source} (${flightsData.count} tracked)`;
+      document.getElementById('lastUpdated').textContent = 'Data generated: ' + new Date(flightsData.generatedAtUtc).toLocaleString();
+    } else {
+      pill.className = 'pill pill-model';
+      pillText.textContent = 'data/flights.json not found yet';
+    }
+  }catch(err){
+    pill.className = 'pill pill-model';
+    pillText.textContent = 'Could not load data files';
+    console.warn(err);
+  }
+  renderBoard();
+  renderCards();
+}
+
+function renderBoard(){
+  const body = document.getElementById('boardBody');
+  if(!flightsData || !flightsData.flights || flightsData.flights.length===0){
+    body.innerHTML = `<div class="empty-note">No observed flights yet. Run the GitHub Action (or wait for the next 3-hour cycle) to populate data/flights.json.</div>`;
+    return;
+  }
+  const list = flightsData.flights.filter(f => currentFilter==='all' || f.kind===currentFilter);
+  if(list.length===0){ body.innerHTML = `<div class="empty-note">No flights match this filter in the current window.</div>`; return; }
+  body.innerHTML = list.map(f=>{
+    const t = new Date(f.timeIso);
+    const bst = new Date(t.getTime() + 6*3600*1000);
+    const timeStr = `${pad(bst.getUTCHours())}:${pad(bst.getUTCMinutes())}`;
+    return `<div class="row">
+      <div class="flightno mono">${f.flightNo}</div>
+      <div class="dest"><b>${f.city}</b><small>${f.iata} · ${f.kind==='intl'?'International':(f.kind==='domestic'?'Domestic':'Other')}</small></div>
+      <div class="time mono">${timeStr}</div>
+      <div class="airline">${f.airline}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCards(){
+  const domesticEl = document.getElementById('domesticCards');
+  const intlEl = document.getElementById('intlCards');
+  if(!faresData || !faresData.routes){
+    domesticEl.innerHTML = `<div class="empty-note">No fare data yet — data/fares.json not found.</div>`;
+    intlEl.innerHTML = '';
+    return;
+  }
+  const build = (kind) => faresData.routes.filter(r=>r.kind===kind).map(r=>`
+    <div class="card">
+      <div class="card-top"><div class="city">${r.city}</div><div class="iata mono">${r.iata}</div></div>
+      <div class="card-row"><span>Median fare · Economy</span><b>${fmtBDT(r.medianEconomyBDT)}</b></div>
+      <div class="card-row"><span>Median fare · Business</span><b>${fmtBDT(r.medianBusinessBDT)}</b></div>
+      <div class="card-row"><span>Offers sampled</span><b>${r.offersSeen ?? 0}</b></div>
+      <div class="card-row"><span>Search date</span><b>${faresData.searchDate}</b></div>
+    </div>`).join('');
+  domesticEl.innerHTML = build('domestic') || `<div class="empty-note">No domestic fare data yet.</div>`;
+  intlEl.innerHTML = build('intl') || `<div class="empty-note">No international fare data yet.</div>`;
+}
+
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const t = e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  t.classList.add('active');
+  currentFilter = t.dataset.filter;
+  renderBoard();
+});
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+
+loadData();
+setInterval(loadData, 5*60*1000); // re-check the data files every 5 min in case Pages redeployed
+</script>
+</body>
+</html>
